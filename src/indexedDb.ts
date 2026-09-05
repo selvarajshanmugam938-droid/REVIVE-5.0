@@ -1,0 +1,4 @@
+const DB_NAME='revive-5-cache'; const STORE='responses';
+function openDb(){return new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+export async function cacheSet(key:string,value:unknown){try{const db=await openDb();const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put({value,at:Date.now()},key);await new Promise<void>((res,rej)=>{tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)});db.close()}catch{}}
+export async function cacheGet<T>(key:string):Promise<T|null>{try{const db=await openDb();const value=await new Promise<any>((res,rej)=>{const r=db.transaction(STORE).objectStore(STORE).get(key);r.onsuccess=()=>res(r.result?.value??null);r.onerror=()=>rej(r.error)});db.close();return value}catch{return null}}
